@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="AI-powered Smart Loan Approval Prediction using Machine Learning and Flask.">
+    <meta name="keywords" content="Loan Prediction, Machine Learning, Flask, Python, Random Forest">
+    <meta name="author" content="Varsha K">
+    <title>Smart Loan Approval Prediction</title>
+
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/favicon.png') }}">
+</head>
+
+<body>
+
+<div id="loader">
+    <div class="loader-box">
+        <div class="spinner-border text-warning"
+             style="width:4rem;height:4rem;"
+             role="status">
+        </div>
+
+        <h3 class="mt-4">
+            Analyzing Your Loan Application...
+        </h3>
+
+        <p>
+            Please wait while our AI model evaluates your details.
+        </p>
+
+    </div>
+
+</div>
+
+
+<nav class="navbar navbar-expand-lg custom-navbar">
+    <div class="container">
+
+        <a class="navbar-brand" href="#">
+            <i class="fa-solid fa-building-columns"></i>
+            Loan Approval Predictor
+        </a>
+
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#menu">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="menu">
+            <ul class="navbar-nav ms-auto">
+
+                <li class="nav-item">
+                    <a class="nav-link" href="#home">Home</a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" href="#predict">Predict</a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" href="#about">About</a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" href="#how">How It Works</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#contact">Contact</a>
+                </li>
+
+            </ul>
+        </div>
+
+    </div>
+</nav>
+
+
+<section id="home" class="hero">
+    <div class="container">
+        <div class="row align-items-center">
+
+            <div class="col-lg-6">
+                <h1>Smart Loan Approval Predictor</h1>
+
+                <p>
+                    Predict your loan eligibility instantly using
+                    Machine Learning and Artificial Intelligence.
+                </p>
+
+                <a href="#predict" class="btn btn-warning btn-lg">
+                    Check Eligibility
+                </a>
+            </div>
+
+            <div class="col-lg-6 text-center">
+                <img src="{{ url_for('static', filename='images/hero.png') }}"
+                     class="img-fluid hero-img"
+                     alt="Loan Hero">
+            </div>
+
+        </div>
+    </div>
+</section>
+
+
+<section id="predict" class="py-5">
+    <div class="container">
+
+        <div class="glass-card">
+
+            <h2 class="text-center mb-5">
+                Loan Application Form
+            </h2>
+
+            <form method="POST" id="loanForm" autocomplete="off">
+
+<div class="row">
+
+<div class="col-lg-6 col-md-6 mb-4">
+<label class="form-label">Applicant Name</label>
+<input type="text" class="form-control" name="applicant_name" placeholder="Enter Applicant Name" value="{{ form_data.get('applicant_name','') }}"required>
+</div>
+
+<div class="col-lg-6 col-md-6 mb-4">
+<label class="form-label">Number of Dependents</label>
+<input type="number" class="form-control" name="no_of_dependents" min="0" max="10" placeholder="Enter Dependents" value="{{ form_data.get('no_of_dependents','') }}" required>
+</div>
+
+<div class="col-lg-6 col-md-6 mb-4">
+<label class="form-label">Education</label>
+<select class="form-select" name="education" required>
+    <option value="">Select Education</option>
+    <option value="Graduate"
+        {% if form_data.get('education')=='Graduate' %}selected{% endif %}>
+        Graduate
+    </option>
+    <option value="Not Graduate"
+        {% if form_data.get('education')=='Not Graduate' %}selected{% endif %}>
+        Not Graduate
+    </option>
+</select>
+</div>
+
+<div class="col-lg-6 col-md-6 mb-4">
+<label class="form-label">Self Employed</label>
+<select class="form-select" name="self_employed" required>
+    <option value="">Select</option>
+    <option value="Yes"
+        {% if form_data.get('self_employed')=='Yes' %}selected{% endif %}>
+        Yes
+    </option>
+    <option value="No"
+        {% if form_data.get('self_employed')=='No' %}selected{% endif %}>
+        No
+    </option>
+</select>
+</div>
+
+<div class="col-lg-6 col-md-6 mb-4">
+<label class="form-label">Annual Income (₹)</label>
+<input type="number" class="form-control" name="income_annum" placeholder="Annual Income" value="{{ form_data.get('income_annum','') }}" required>
+</div>
+
+<div class="col-lg-6 col-md-6 mb-4">
+<label class="form-label">Loan Amount (₹)</label>
+<input type="number" class="form-control" name="loan_amount" placeholder="Loan Amount" value="{{ form_data.get('loan_amount','') }}" required>
+</div>
+
+<div class="col-lg-6 col-md-6 mb-4">
+<label class="form-label">Loan Term (Years)</label>
+<input type="number" class="form-control" name="loan_term" placeholder="Loan Term" value="{{ form_data.get('loan_term','') }}" required>
+</div>
+
+<div class="col-lg-6 col-md-6 mb-4">
+<label class="form-label">CIBIL Score</label>
+<input type="number" class="form-control" name="cibil_score" min="300" max="900" placeholder="300 - 900" value="{{ form_data.get('cibil_score','') }}" required>
+</div>
+
+<div class="col-lg-6 col-md-6 mb-4">
+<label class="form-label">Residential Assets (₹)</label>
+<input type="number" class="form-control" name="residential_assets_value" placeholder="Residential Assets" value="{{ form_data.get('residential_assets_value','') }}" required>
+</div>
+
+<div class="col-lg-6 col-md-6 mb-4">
+<label class="form-label">Commercial Assets (₹)</label>
+<input type="number" class="form-control" name="commercial_assets_value" placeholder="Commercial Assets" value="{{ form_data.get('commercial_assets_value','') }}" required>
+</div>
+
+<div class="col-lg-6 col-md-6 mb-4">
+<label class="form-label">Luxury Assets (₹)</label>
+<input type="number" class="form-control" name="luxury_assets_value" placeholder="Luxury Assets" value="{{ form_data.get('luxury_assets_value','') }}" required>
+</div>
+
+<div class="col-lg-6 col-md-6 mb-4">
+<label class="form-label">Bank Assets (₹)</label>
+<input type="number" class="form-control" name="bank_asset_value" placeholder="Bank Assets" value="{{ form_data.get('bank_asset_value','') }}" required>
+</div>
+
+</div>
+
+<div class="text-center mt-3">
+<button type="submit" class="btn btn-warning btn-lg px-5">
+<i class="fa-solid fa-money-check-dollar"></i>
+Predict Loan Status
+</button>
+</div>
+
+</form>
+
+        </div>
+
+    </div>
+</section>
+{% if prediction %}
+
+<section id="prediction-result" class="py-5">
+
+    <div class="container">
+
+        <div class="result-card {% if prediction=='Approved' %}approved{% else %}rejected{% endif %}">
+
+            {% if prediction=="Approved" %}
+
+            <i class="fa-solid fa-circle-check display-1 text-success"></i>
+
+            <h2 class="mt-3 text-success">
+                Loan Approved
+            </h2>
+
+            {% else %}
+
+            <i class="fa-solid fa-circle-xmark display-1 text-danger"></i>
+
+            <h2 class="mt-3 text-danger">
+                Loan Rejected
+            </h2>
+
+            {% endif %}
+            <div class="summary-card mt-4">
+    <h4>
+        <i class="fa-solid fa-user"></i>
+        Applicant Details
+    </h4>
+
+    <div class="row mt-4">
+
+        <div class="col-md-6 mb-3">
+            <strong>Name</strong>
+            <p>{{ applicant_name }}</p>
+        </div>
+
+        <div class="col-md-6 mb-3">
+            <strong>Prediction</strong>
+            <p>{{ prediction }}</p>
+        </div>
+
+        <div class="col-md-6 mb-3">
+            <strong>Confidence</strong>
+            <p>{{ confidence }}%</p>
+        </div>
+
+        <div class="col-md-6 mb-3">
+            <strong>Risk Level</strong>
+            <p>{{ risk }}</p>
+        </div>
+
+    </div>
+</div>
+
+            <div class="row mt-5">
+
+                <div class="col-lg-4 mb-3">
+
+                    <div class="info-box">
+
+                        <h5>Eligibility Score</h5>
+
+                        <h2>{{ eligibility_score }}%</h2>
+
+                    </div>
+
+                </div>
+
+                <div class="col-lg-4 mb-3">
+
+                    <div class="info-box">
+
+                        <h5>Prediction Confidence</h5>
+
+                        <h2>{{ confidence }}%</h2>
+
+                    </div>
+
+                </div>
+
+                <div class="col-lg-4 mb-3">
+
+                    <div class="info-box">
+
+                        <h5>Risk Level</h5>
+
+                        <h2>{{ risk }}</h2>
+
+                    </div>
+
+                </div>
+
+            </div>
+            <div class="recommendation mt-5">
+
+    {% if prediction=="Approved" %}
+
+    <h4>Recommendation</h4>
+
+    <ul>
+
+        <li>✔ Good financial profile.</li>
+
+        <li>✔ Healthy CIBIL score.</li>
+
+        <li>✔ Assets support the requested loan.</li>
+
+        <li>✔ Low financial risk.</li>
+
+    </ul>
+
+    {% else %}
+
+    <h4>Suggestions</h4>
+
+    <ul>
+
+        <li>✔ Improve your CIBIL score.</li>
+
+        <li>✔ Increase annual income.</li>
+
+        <li>✔ Reduce requested loan amount.</li>
+
+        <li>✔ Increase asset value.</li>
+
+    </ul>
+
+    {% endif %}
+
+</div>
+        </div>
+
+    </div>
+
+</section>
+
+
+{% endif %}
+<div class="text-center mt-4 mb-5">
+    <a href="{{ url_for('download',
+        applicant_name=applicant_name,
+        no_of_dependents=form_data.get('no_of_dependents'),
+        education=form_data.get('education'),
+        self_employed=form_data.get('self_employed'),
+        income_annum=form_data.get('income_annum'),
+        loan_amount=form_data.get('loan_amount'),
+        loan_term=form_data.get('loan_term'),
+        cibil_score=form_data.get('cibil_score'),
+        residential_assets_value=form_data.get('residential_assets_value'),
+        commercial_assets_value=form_data.get('commercial_assets_value'),
+        luxury_assets_value=form_data.get('luxury_assets_value'),
+        bank_asset_value=form_data.get('bank_asset_value'),
+        prediction=prediction,
+        confidence=confidence,
+        risk=risk
+    ) }}" class="btn btn-primary btn-lg">
+
+        <i class="fa-solid fa-download"></i>
+        Download Report
+
+    </a>
+</div>
+<!-- About Section -->
+
+<section id="about" class="about py-5">
+
+    <div class="container">
+
+        <div class="row align-items-center">
+
+            <div class="col-lg-6">
+
+                <img src="{{ url_for('static', filename='images/about.png') }}"
+                     class="img-fluid about-img"
+                     alt="About">
+
+            </div>
+
+            <div class="col-lg-6">
+
+                <h2>About Loan Approval Predictor</h2>
+
+                <p class="mt-4">
+
+                    The Loan Approval Predictor is an Artificial Intelligence
+                    powered web application developed using Machine Learning,
+                    Flask and Bootstrap.
+
+                </p>
+
+                <p>
+
+                    The prediction model analyzes an applicant's financial
+                    information including income, loan amount, CIBIL score,
+                    assets and employment details to determine whether a loan
+                    application is likely to be approved.
+
+                </p>
+
+                <div class="row mt-4">
+
+                    <div class="col-6">
+
+                        <h4>97.78%</h4>
+
+                        <p>Model Accuracy</p>
+
+                    </div>
+
+                    <div class="col-6">
+
+                        <h4>Random Forest</h4>
+
+                        <p>Machine Learning</p>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+<section id="how" class="py-5 how-section">
+
+    <div class="container">
+
+        <div class="text-center mb-5">
+
+            <h2>How It Works</h2>
+
+            <p>
+                Our Machine Learning model analyzes your financial details
+                to predict your loan approval eligibility.
+            </p>
+
+        </div>
+
+        <div class="row">
+
+            <div class="col-lg-3 col-md-6 mb-4">
+
+                <div class="step-card">
+
+                    <i class="fa-solid fa-file-pen"></i>
+
+                    <h4>Step 1</h4>
+
+                    <h5>Fill Details</h5>
+
+                    <p>
+                        Enter your financial and personal information.
+                    </p>
+
+                </div>
+
+            </div>
+
+            <div class="col-lg-3 col-md-6 mb-4">
+
+                <div class="step-card">
+
+                    <i class="fa-solid fa-microchip"></i>
+
+                    <h4>Step 2</h4>
+
+                    <h5>AI Analysis</h5>
+
+                    <p>
+                        Our Random Forest model analyzes all input features.
+                    </p>
+
+                </div>
+
+            </div>
+
+            <div class="col-lg-3 col-md-6 mb-4">
+
+                <div class="step-card">
+
+                    <i class="fa-solid fa-chart-column"></i>
+
+                    <h4>Step 3</h4>
+
+                    <h5>Prediction</h5>
+
+                    <p>
+                        The model predicts whether the loan is likely to be approved.
+                    </p>
+
+                </div>
+
+            </div>
+
+            <div class="col-lg-3 col-md-6 mb-4">
+
+                <div class="step-card">
+
+                    <i class="fa-solid fa-circle-check"></i>
+
+                    <h4>Step 4</h4>
+
+                    <h5>Decision</h5>
+
+                    <p>
+                        Instantly view the prediction result and assessment.
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+<section class="py-5" id="features">
+
+    <div class="container">
+
+        <div class="text-center mb-5">
+
+            <h2>Why Choose Our Loan Predictor?</h2>
+
+            <p>
+                Experience fast, secure and AI-powered loan eligibility prediction.
+            </p>
+
+        </div>
+
+        <div class="row">
+
+            <div class="col-lg-3 col-md-6 mb-4">
+
+                <div class="feature-card">
+
+                    <i class="fa-solid fa-shield-halved"></i>
+
+                    <h4>Secure</h4>
+
+                    <p>
+                        Your information is processed securely and used only for prediction.
+                    </p>
+
+                </div>
+
+            </div>
+
+            <div class="col-lg-3 col-md-6 mb-4">
+
+                <div class="feature-card">
+
+                    <i class="fa-solid fa-brain"></i>
+
+                    <h4>AI Powered</h4>
+
+                    <p>
+                        Built using a Random Forest Machine Learning model.
+                    </p>
+
+                </div>
+
+            </div>
+
+            <div class="col-lg-3 col-md-6 mb-4">
+
+                <div class="feature-card">
+
+                    <i class="fa-solid fa-bolt"></i>
+
+                    <h4>Instant Result</h4>
+
+                    <p>
+                        Get your loan prediction instantly with one click.
+                    </p>
+
+                </div>
+
+            </div>
+
+            <div class="col-lg-3 col-md-6 mb-4">
+
+                <div class="feature-card">
+
+                    <i class="fa-solid fa-mobile-screen-button"></i>
+
+                    <h4>Responsive</h4>
+
+                    <p>
+                        Optimized for desktop, tablet and mobile devices.
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+<section class="stats-section py-5">
+
+    <div class="container">
+
+        <div class="row text-center">
+
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="stat-card">
+                    <i class="fa-solid fa-chart-line"></i>
+                    <h2 class="counter" data-target="97">0</h2>
+                    <h5>Model Accuracy</h5>
+                </div>
+            </div>
+
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="stat-card">
+                    <i class="fa-solid fa-users"></i>
+                    <h2 class="counter" data-target="4269">0</h2>
+                    <h5>Dataset Records</h5>
+                </div>
+            </div>
+
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="stat-card">
+                    <i class="fa-solid fa-list-check"></i>
+                    <h2 class="counter" data-target="11">0</h2>
+                    <h5>Prediction Features</h5>
+                </div>
+            </div>
+
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="stat-card">
+                    <i class="fa-solid fa-robot"></i>
+                    <h2>RF</h2>
+                    <h5>Random Forest</h5>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+<section class="py-5" id="faq">
+
+    <div class="container">
+
+        <div class="text-center mb-5">
+            <h2>Frequently Asked Questions</h2>
+            <p>Find answers to common questions about loan eligibility prediction.</p>
+        </div>
+
+        <div class="accordion" id="loanFAQ">
+
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button" data-bs-toggle="collapse" data-bs-target="#q1">
+                        What is a Loan Approval Predictor?
+                    </button>
+                </h2>
+
+                <div id="q1" class="accordion-collapse collapse show" data-bs-parent="#loanFAQ">
+                    <div class="accordion-body">
+                        It is a Machine Learning application that predicts whether a loan is likely to be approved based on applicant details.
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" data-bs-toggle="collapse" data-bs-target="#q2">
+                        Which Machine Learning algorithm is used?
+                    </button>
+                </h2>
+
+                <div id="q2" class="accordion-collapse collapse" data-bs-parent="#loanFAQ">
+                    <div class="accordion-body">
+                        This project uses the Random Forest Classifier for accurate loan approval prediction.
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="accordion-item">
+
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" data-bs-toggle="collapse" data-bs-target="#q3">
+                        Is my information stored?
+                    </button>
+                </h2>
+
+                <div id="q3" class="accordion-collapse collapse" data-bs-parent="#loanFAQ">
+                    <div class="accordion-body">
+                        No. Your information is used only for prediction during the current session and is not permanently stored.
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="accordion-item">
+
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" data-bs-toggle="collapse" data-bs-target="#q4">
+                        Is this an official bank approval?
+                    </button>
+                </h2>
+
+                <div id="q4" class="accordion-collapse collapse" data-bs-parent="#loanFAQ">
+                    <div class="accordion-body">
+                        No. This application provides a Machine Learning prediction for educational purposes and should not be considered an official bank decision.
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+<section id="contact" class="contact-section py-5">
+    <div class="container">
+
+        <div class="text-center mb-5">
+            <h2>Contact Us</h2>
+            <p>Have questions or feedback? We'd love to hear from you.</p>
+        </div>
+
+        <div class="row">
+
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="contact-card">
+                    <i class="fa-solid fa-envelope"></i>
+                    <h4>Email</h4>
+                    <a href="mailto:varshabangera5@email.com">
+                    Send me an Email
+                    </a>
+                </div>
+            </div>
+
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="contact-card">
+                    <i class="fab fa-linkedin"></i>
+                    <h4>LinkedIn</h4>
+                    <a href="https://www.linkedin.com/in/varsha-k-7799982a0" target="_blank">
+    Visit my LinkedIn Profile
+</a>
+                </div>
+            </div>
+
+            <div class="col-lg-4 col-md-12 mb-4">
+                <div class="contact-card">
+                    <i class="fab fa-github"></i>
+                    <h4>GitHub</h4>
+                   <a href="https://github.com/Varsha-k28" target="_blank">
+                   Visit my GitHub Profile
+                    </a>
+
+
+    </a>
+
+</div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+</section>
+
+
+<footer class="footer">
+
+    <div class="container">
+
+        <div class="row">
+
+            <div class="col-lg-4 mb-4">
+
+                <h3>
+                    <i class="fa-solid fa-building-columns"></i>
+                    Loan Approval Predictor
+                </h3>
+
+                <p class="mt-3">
+                    AI-powered Loan Approval Prediction system built using
+                    Machine Learning, Flask and Bootstrap.
+                </p>
+
+            </div>
+
+            <div class="col-lg-4 mb-4">
+
+                <h4>Technologies</h4>
+
+                <ul class="footer-links">
+
+                    <li>Python</li>
+                    <li>Flask</li>
+                    <li>Machine Learning</li>
+                    <li>Random Forest</li>
+                    <li>Bootstrap 5</li>
+
+                </ul>
+
+            </div>
+
+            <div class="col-lg-4 mb-4">
+
+                <h4>Developer</h4>
+
+                <p>Varsha K</p>
+
+                <div class="social-icons">
+
+    <a href="https://github.com/Varsha-k28" target="_blank">
+        <i class="fab fa-github"></i>
+    </a>
+
+    <a href="https://www.linkedin.com/in/varsha-k-7799982a0" target="_blank">
+        <i class="fab fa-linkedin"></i>
+    </a>
+
+    <a href="mailto:varshabangera5@email.com">
+        <i class="fas fa-envelope"></i>
+    </a>
+
+</div>
+            </div>
+
+        </div>
+
+        <hr>
+
+        <div class="text-center">
+
+            <p>
+               <p>
+© 2026 Smart Loan Approval Prediction. All Rights Reserved.
+</p>
+                Developed by <strong>Varsha K</strong>
+            </p>
+
+        </div>
+
+    </div>
+
+</footer>
+
+
+
+<button id="topBtn">
+
+    <i class="fa-solid fa-arrow-up"></i>
+
+</button>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>
